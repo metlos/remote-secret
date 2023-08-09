@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	api "github.com/redhat-appstudio/remote-secret/api/v1beta1"
-	"github.com/redhat-appstudio/remote-secret/pkg/logs"
 	auth "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +30,9 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	api "github.com/redhat-appstudio/remote-secret/api/v1beta1"
+	"github.com/redhat-appstudio/remote-secret/pkg/logs"
 )
 
 const (

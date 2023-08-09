@@ -70,3 +70,13 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - argoproj.io
+  resources:
+  - applications
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
