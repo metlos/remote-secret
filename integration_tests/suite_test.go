@@ -19,22 +19,23 @@ import (
 	"path/filepath"
 	"testing"
 
+	appv1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/redhat-appstudio/remote-secret/controllers"
-	"github.com/redhat-appstudio/remote-secret/controllers/remotesecretstorage"
-	"github.com/redhat-appstudio/remote-secret/pkg/logs"
-	"github.com/redhat-appstudio/remote-secret/pkg/secretstorage/memorystorage"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	api "github.com/redhat-appstudio/remote-secret/api/v1beta1"
+	"github.com/redhat-appstudio/remote-secret/controllers"
+	"github.com/redhat-appstudio/remote-secret/controllers/remotesecretstorage"
 	"github.com/redhat-appstudio/remote-secret/pkg/config"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/redhat-appstudio/remote-secret/pkg/logs"
+	"github.com/redhat-appstudio/remote-secret/pkg/secretstorage/memorystorage"
 )
 
 func TestSuite(t *testing.T) {
@@ -64,6 +65,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = api.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = appv1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	ITest.Client, err = client.New(cfg, client.Options{Scheme: scheme})

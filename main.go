@@ -22,27 +22,23 @@ import (
 	"os"
 
 	"github.com/alexflint/go-arg"
+	appv1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	api "github.com/redhat-appstudio/remote-secret/api/v1beta1"
 	"github.com/redhat-appstudio/remote-secret/controllers"
 	"github.com/redhat-appstudio/remote-secret/controllers/bindings"
 	"github.com/redhat-appstudio/remote-secret/pkg/cmd"
 	"github.com/redhat-appstudio/remote-secret/pkg/config"
 	"github.com/redhat-appstudio/remote-secret/pkg/logs"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-
-	corev1 "k8s.io/api/core/v1"
-
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
-	api "github.com/redhat-appstudio/remote-secret/api/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 var (
@@ -54,6 +50,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(api.AddToScheme(scheme))
+	utilruntime.Must(appv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

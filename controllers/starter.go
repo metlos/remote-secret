@@ -18,11 +18,12 @@ import (
 	"context"
 	"fmt"
 
+	controllerruntime "sigs.k8s.io/controller-runtime"
+
 	"github.com/redhat-appstudio/remote-secret/controllers/bindings"
 	"github.com/redhat-appstudio/remote-secret/controllers/remotesecretstorage"
 	"github.com/redhat-appstudio/remote-secret/pkg/config"
 	"github.com/redhat-appstudio/remote-secret/pkg/secretstorage"
-	controllerruntime "sigs.k8s.io/controller-runtime"
 )
 
 func SetupAllReconcilers(mgr controllerruntime.Manager, cfg *config.OperatorConfiguration, secretStorage secretstorage.SecretStorage, cf bindings.ClientFactory) error {
@@ -58,6 +59,12 @@ func SetupAllReconcilers(mgr controllerruntime.Manager, cfg *config.OperatorConf
 		}).SetupWithManager(mgr); err != nil {
 			return err
 		}
+	}
+
+	if err := (&ArgoCDApplicationReconciler{
+		Client: mgr.GetClient(),
+	}).SetupWithManager(mgr); err != nil {
+		return err
 	}
 
 	return nil
