@@ -1,0 +1,41 @@
+# This will create a cluster role and service account in the default namespace
+# that allows the the remote secrets in the default namespace to deploy to any
+# other local namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: remotesecret-target-deployment
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - "secrets"
+  - "serviceaccounts"
+  verbs:
+  - "list"
+  - "get"
+  - "create"
+  - "update"
+  - "delete"
+---
+apiVersion: v1
+kind: ServiceAccount 
+metadata:
+  name: remotesecret-deployment-enabler
+  namespace: default
+  labels:
+    appstudio.redhat.com/remotesecret-auth-sa: "true"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: remotesecret-deployment-enabler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: remotesecret-target-deployment
+subjects:
+- kind: ServiceAccount
+  name: remotesecret-deployment-enabler
+  namespace: default
