@@ -115,7 +115,14 @@ func (r *ArgoCDApplicationReconciler) Reconcile(ctx context.Context, req reconci
 
 	// set the sync policy to respect the ignores also during the sync, so that ArgoCD doesn't overwrite our changes to the secret data on the next sync.
 	// TODO: is this too invasive?
-	application.Spec.SyncPolicy.SyncOptions.AddOption("RespectIgnoreDifferences=true")
+	if application.Spec.SyncPolicy == nil {
+		application.Spec.SyncPolicy = &appv1.SyncPolicy{}
+	}
+	if application.Spec.SyncPolicy.SyncOptions != nil {
+		application.Spec.SyncPolicy.SyncOptions.AddOption("RespectIgnoreDifferences=true")
+	} else {
+		application.Spec.SyncPolicy.SyncOptions = appv1.SyncOptions{"RespectIgnoreDifferences=true"}
+	}
 
 	if err := r.Update(ctx, application); err != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to update the ArgoCD application %s to ignore the secret data: %w", client.ObjectKeyFromObject(application), err)
@@ -152,6 +159,14 @@ func (r *ArgoCDApplicationReconciler) Reconcile(ctx context.Context, req reconci
 					Namespace:    application.Namespace,
 					Annotations: map[string]string{
 						argoApplicationAnnotation: application.Name,
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							Name:       application.Name,
+							UID:        application.UID,
+							Kind:       application.Kind,
+							APIVersion: application.APIVersion,
+						},
 					},
 				},
 				Spec: api.RemoteSecretSpec{
