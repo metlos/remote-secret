@@ -31,6 +31,22 @@ type NamespaceTarget struct {
 
 var _ bindings.SecretDeploymentTarget = (*NamespaceTarget)(nil)
 
+func (t *NamespaceTarget) GetActualManagedAnnotations() []string {
+	ret := make([]string, 0, len(t.TargetStatus.SetAnnotations))
+	for k := range t.TargetStatus.SetAnnotations {
+		ret = append(ret, k)
+	}
+	return ret
+}
+
+func (t *NamespaceTarget) GetActualManagedLabels() []string {
+	ret := make([]string, 0, len(t.TargetStatus.SetLabels))
+	for k := range t.TargetStatus.SetLabels {
+		ret = append(ret, k)
+	}
+	return ret
+}
+
 func (t *NamespaceTarget) GetSpec() api.LinkableSecretSpec {
 	ret := t.SecretSpec
 	if t.TargetSpec.Secret != nil {

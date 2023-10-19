@@ -22,7 +22,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -404,6 +404,20 @@ func (in *TargetStatus) DeepCopyInto(out *TargetStatus) {
 		in, out := &in.ServiceAccountNames, &out.ServiceAccountNames
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.SetLabels != nil {
+		in, out := &in.SetLabels, &out.SetLabels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SetAnnotations != nil {
+		in, out := &in.SetAnnotations, &out.SetAnnotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 }
 

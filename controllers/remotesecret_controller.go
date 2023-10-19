@@ -53,9 +53,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var (
-	unexpectedObjectTypeError = stdErrors.New("unexpected object type")
-)
+var unexpectedObjectTypeError = stdErrors.New("unexpected object type")
 
 const linkedObjectsFinalizerName = "appstudio.redhat.com/linked-objects"
 
@@ -488,10 +486,21 @@ func (r *RemoteSecretReconciler) deployToNamespace(ctx context.Context, remoteSe
 			targetStatus.ServiceAccountNames[i] = sa.Name
 		}
 		targetStatus.Error = ""
+
+		// so let's use it to remember the labels and annotations that we are explicitly setting on the secret so that we can properly
+		// depTargetSpec contains the labels and annotations derived from the spec of the remote secret (taking into account the overrides)
+		// manage them in case of changes.
+		// The `deps` contains the actual secret as it exists in the target, which will contain more labels and annos (either set by someone
+		// else for the pre-existing secrets or the tracking labels and annos set by the dep handler).
+		depTargetSpec := depHandler.Target.GetSpec()
+		targetStatus.SetLabels = depTargetSpec.Labels
+		targetStatus.SetAnnotations = depTargetSpec.Annotations
 	} else {
 		targetStatus.Namespace = targetSpec.Namespace
 		targetStatus.SecretName = ""
 		targetStatus.ServiceAccountNames = []string{}
+		targetStatus.SetLabels = nil
+		targetStatus.SetAnnotations = nil
 		// finalizer depends on this being non-empty only in situations where we never deployed anything to the
 		// target.
 		targetStatus.Error = rerror.AggregateNonNilErrors(depErr, checkPointErr, syncErr).Error()
@@ -598,7 +607,7 @@ type remoteSecretLinksFinalizer struct {
 	storage       remotesecretstorage.RemoteSecretStorage
 }
 
-//var _ finalizer.Finalizer = (*linkedObjectsFinalizer)(nil)
+// var _ finalizer.Finalizer = (*linkedObjectsFinalizer)(nil)
 
 // Finalize removes the secret and possibly also service account synced to the actual binging being deleted
 func (f *remoteSecretLinksFinalizer) Finalize(ctx context.Context, obj client.Object) (finalizer.Result, error) {

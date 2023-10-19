@@ -109,6 +109,13 @@ type TargetStatus struct {
 	// Error the optional error message if the deployment of either the secret or the service accounts failed.
 	// +optional
 	Error string `json:"error,omitempty"`
+	// SetLabels are the labels that are explicilty set on the secret because they are defined in the spec of this remote
+	// secret. Note that the secret can have additional labels set on it that are not affected by the remote secret.
+	SetLabels map[string]string `json:"setLabels,omitempty"`
+	// SetAnnotations are the annotations that are explicilty set on the secret because they are defined in the spec of
+	// this remote secret. Note that the secret can have additional annotations set on it that are not affected by
+	// the remote secret.
+	SetAnnotations map[string]string `json:"setAnnotations,omitempty"`
 }
 
 // TargetKey is not used in the RemoteSecret spec as such but it represents an identifier of a target. As such it can be used
