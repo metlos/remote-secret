@@ -323,6 +323,9 @@ func (r *RemoteSecretReconciler) obtainData(ctx context.Context, remoteSecret *a
 		remoteSecret.Status.SecretStatus.Keys[idx] = k
 		idx++
 	}
+	// we need to sort the keys alphabetically so that we don't get spurious changes caused by the random
+	// iteration order of the secretData map.
+	sort.Strings(remoteSecret.Status.SecretStatus.Keys)
 
 	result.ReturnValue = secretData
 
@@ -531,7 +534,7 @@ func (r *RemoteSecretReconciler) deployToNamespace(ctx context.Context, remoteSe
 		for i, sa := range deps.ServiceAccounts {
 			saks[i] = client.ObjectKeyFromObject(sa)
 		}
-		debugLog.Info("successfully synced dependent objects of remote secret", "remoteSecret", client.ObjectKeyFromObject(remoteSecret), "syncedSecret", client.ObjectKeyFromObject(deps.Secret))
+		debugLog.Info("successfully synced dependent objects of remote secret", "remoteSecret", client.ObjectKeyFromObject(remoteSecret), "syncedSecret", client.ObjectKeyFromObject(deps.Secret), "SAs", saks)
 	}
 
 	// we want the inconsistency errors to be noted by the user, but we don't want them to

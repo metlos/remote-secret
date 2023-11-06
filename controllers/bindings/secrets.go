@@ -34,13 +34,13 @@ var (
 	emptySecretData = map[string][]byte{}
 
 	secretDiffOpts = cmp.Options{
-		cmpopts.IgnoreFields(corev1.Secret{}, "TypeMeta", "ObjectMeta"),
+		cmpopts.IgnoreFields(corev1.Secret{}, "TypeMeta"),
 	}
 
 	// the service account secrets are treated specially by Kubernetes that automatically adds "ca.crt", "namespace" and
 	// "token" entries into the secret's data.
 	serviceAccountSecretDiffOpts = cmp.Options{
-		cmpopts.IgnoreFields(corev1.Secret{}, "TypeMeta", "ObjectMeta"),
+		cmpopts.IgnoreFields(corev1.Secret{}, "TypeMeta"),
 		cmp.FilterPath(func(p cmp.Path) bool {
 			return p.Last().String() == ".Data"
 		}, cmp.Comparer(func(a map[string][]byte, b map[string][]byte) bool {
@@ -75,7 +75,8 @@ type secretHandler[K any] struct {
 // A secret in the target can become stale if it no longer corresponds to the spec of the target.
 func (h *secretHandler[K]) GetStale(ctx context.Context) (*corev1.Secret, error) {
 	existingSecretName := h.Target.GetActualSecretName()
-	if existingSecretName == "" || NameCorresponds(existingSecretName, h.Target.GetSpec().Name, h.Target.GetSpec().GenerateName) {
+	spec := h.Target.GetSpec()
+	if existingSecretName == "" || NameCorresponds(existingSecretName, spec.Name, spec.GenerateName) {
 		return nil, nil
 	}
 
