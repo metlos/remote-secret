@@ -482,7 +482,7 @@ func (r *RemoteSecretReconciler) deployToNamespace(ctx context.Context, remoteSe
 
 	if deps != nil {
 		targetStatus.Namespace = deps.Secret.Namespace
-		targetStatus.SecretName = deps.Secret.Name
+		targetStatus.Secret.Name = deps.Secret.Name
 
 		targetStatus.ServiceAccountNames = make([]string, len(deps.ServiceAccounts))
 		for i, sa := range deps.ServiceAccounts {
@@ -496,14 +496,14 @@ func (r *RemoteSecretReconciler) deployToNamespace(ctx context.Context, remoteSe
 		// The `deps` contains the actual secret as it exists in the target, which will contain more labels and annos (either set by someone
 		// else for the pre-existing secrets or the tracking labels and annos set by the dep handler).
 		depTargetSpec := depHandler.Target.GetSpec()
-		targetStatus.SetLabels = depTargetSpec.Labels
-		targetStatus.SetAnnotations = depTargetSpec.Annotations
+		targetStatus.Secret.Labels = depTargetSpec.Labels
+		targetStatus.Secret.Annotations = depTargetSpec.Annotations
 	} else {
 		targetStatus.Namespace = targetSpec.Namespace
-		targetStatus.SecretName = ""
+		targetStatus.Secret.Name = ""
 		targetStatus.ServiceAccountNames = []string{}
-		targetStatus.SetLabels = nil
-		targetStatus.SetAnnotations = nil
+		targetStatus.Secret.Labels = nil
+		targetStatus.Secret.Annotations = nil
 		// finalizer depends on this being non-empty only in situations where we never deployed anything to the
 		// target.
 		targetStatus.Error = rerror.AggregateNonNilErrors(depErr, checkPointErr, syncErr).Error()
@@ -511,6 +511,9 @@ func (r *RemoteSecretReconciler) deployToNamespace(ctx context.Context, remoteSe
 			inconsistent = true
 		}
 	}
+
+	// keep the backwards-compatibility for users that use this field
+	targetStatus.SecretName = targetStatus.Secret.Name //nolint:staticcheck // SA1019 - this deprecated field needs to be set
 
 	updateErr = r.Client.Status().Update(ctx, remoteSecret)
 	if syncErr != nil || updateErr != nil {
@@ -677,7 +680,7 @@ func (f *remoteSecretLinksFinalizer) createErrorEvent(ctx context.Context, rs cl
 		Related: &corev1.ObjectReference{
 			Kind:       "Secret",
 			Namespace:  target.Namespace,
-			Name:       target.SecretName,
+			Name:       target.Secret.Name,
 			APIVersion: "v1",
 		},
 		Type:          "Warning",

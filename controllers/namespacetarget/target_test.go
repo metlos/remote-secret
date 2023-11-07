@@ -109,8 +109,10 @@ func getTestRemoteSecret() *api.RemoteSecret {
 		Status: api.RemoteSecretStatus{
 			Targets: []api.TargetStatus{
 				{
-					Namespace:           "target-ns",
-					SecretName:          "kachny-asdf",
+					Namespace: "target-ns",
+					Secret: api.TargetSecretStatus{
+						Name: "kachny-asdf",
+					},
 					ServiceAccountNames: []string{"a", "b"},
 				},
 			},
@@ -140,8 +142,10 @@ func getTestRemoteSecretWithOverrides() *api.RemoteSecret {
 		Status: api.RemoteSecretStatus{
 			Targets: []api.TargetStatus{
 				{
-					Namespace:           "target-ns",
-					SecretName:          "target-secret",
+					Namespace: "target-ns",
+					Secret: api.TargetSecretStatus{
+						Name: "target-secret",
+					},
 					ServiceAccountNames: []string{"a", "b"},
 				},
 			},

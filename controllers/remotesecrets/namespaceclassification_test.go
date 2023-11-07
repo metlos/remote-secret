@@ -110,18 +110,24 @@ func TestClassifyReordered(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_b",
-						SecretName:          "sec",
+						Namespace: "ns_b",
+						Secret: api.TargetSecretStatus{
+							Name: "sec",
+						},
 						ServiceAccountNames: []string{},
 					},
 					{
-						Namespace:           "ns_c",
-						SecretName:          "sec",
+						Namespace: "ns_c",
+						Secret: api.TargetSecretStatus{
+							Name: "sec",
+						},
 						ServiceAccountNames: []string{},
 					},
 					{
-						Namespace:           "ns_a",
-						SecretName:          "sec",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "sec",
+						},
 						ServiceAccountNames: []string{},
 					},
 				},
@@ -153,18 +159,24 @@ func TestClassifyReordered(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_a",
-						SecretName:          "sec2",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "sec2",
+						},
 						ServiceAccountNames: []string{},
 					},
 					{
-						Namespace:           "ns_a",
-						SecretName:          "sec",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "sec",
+						},
 						ServiceAccountNames: []string{},
 					},
 					{
-						Namespace:           "ns_a",
-						SecretName:          "sec1",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "sec1",
+						},
 						ServiceAccountNames: []string{},
 					},
 				},
@@ -196,18 +208,24 @@ func TestClassifyReordered(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_a",
-						SecretName:          "sec2-asdf",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "sec2-asdf",
+						},
 						ServiceAccountNames: []string{},
 					},
 					{
-						Namespace:           "ns_a",
-						SecretName:          "sec-asfd",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "sec-asfd",
+						},
 						ServiceAccountNames: []string{},
 					},
 					{
-						Namespace:           "ns_a",
-						SecretName:          "sec1-asdf",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "sec1-asdf",
+						},
 						ServiceAccountNames: []string{},
 					},
 				},
@@ -250,8 +268,10 @@ func TestClassifyWithSomeMissingFromStatus(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_b",
-						SecretName:          "sec",
+						Namespace: "ns_b",
+						Secret: api.TargetSecretStatus{
+							Name: "sec",
+						},
 						ServiceAccountNames: []string{"sa_a", "sa_b"},
 					},
 				},
@@ -280,8 +300,10 @@ func TestClassifyWithSomeMissingFromStatus(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_b",
-						SecretName:          "secb",
+						Namespace: "ns_b",
+						Secret: api.TargetSecretStatus{
+							Name: "secb",
+						},
 						ServiceAccountNames: []string{"sa_a", "sa_b"},
 					},
 				},
@@ -310,8 +332,10 @@ func TestClassifyWithSomeMissingFromStatus(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_b",
-						SecretName:          "secb-asdf",
+						Namespace: "ns_b",
+						Secret: api.TargetSecretStatus{
+							Name: "secb-asdf",
+						},
 						ServiceAccountNames: []string{"sa_a", "sa_b"},
 					},
 				},
@@ -350,13 +374,16 @@ func TestClassifyWithSomeMoreInStatus(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_b",
-						SecretName:          "sec",
-						ServiceAccountNames: []string{"sa_a", "sa_b"},
+						Namespace: "ns_b",
+						Secret: api.TargetSecretStatus{
+							Name: "sec",
+						},
 					},
 					{
-						Namespace:           "ns_a",
-						SecretName:          "sec",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "sec",
+						},
 						ServiceAccountNames: []string{"sa_a", "sa_b"},
 					},
 				},
@@ -379,13 +406,17 @@ func TestClassifyWithSomeMoreInStatus(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_b",
-						SecretName:          "sec",
+						Namespace: "ns_b",
+						Secret: api.TargetSecretStatus{
+							Name: "sec",
+						},
 						ServiceAccountNames: []string{"sa_a", "sa_b"},
 					},
 					{
-						Namespace:           "ns_a",
-						SecretName:          "seca",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "seca",
+						},
 						ServiceAccountNames: []string{"sa_a", "sa_b"},
 					},
 				},
@@ -408,13 +439,17 @@ func TestClassifyWithSomeMoreInStatus(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:           "ns_b",
-						SecretName:          "sec-asdf",
+						Namespace: "ns_b",
+						Secret: api.TargetSecretStatus{
+							Name: "sec-asdf",
+						},
 						ServiceAccountNames: []string{"sa_a", "sa_b"},
 					},
 					{
-						Namespace:           "ns_a",
-						SecretName:          "seca-asdf",
+						Namespace: "ns_a",
+						Secret: api.TargetSecretStatus{
+							Name: "seca-asdf",
+						},
 						ServiceAccountNames: []string{"sa_a", "sa_b"},
 					},
 				},
@@ -699,8 +734,10 @@ func TestClassificationWithOverrides(t *testing.T) {
 				Status: api.RemoteSecretStatus{
 					Targets: []api.TargetStatus{
 						{
-							Namespace:  "ns",
-							SecretName: "override",
+							Namespace: "ns",
+							Secret: api.TargetSecretStatus{
+								Name: "override",
+							},
 						},
 					},
 				},
@@ -731,8 +768,10 @@ func TestClassificationWithOverrides(t *testing.T) {
 				Status: api.RemoteSecretStatus{
 					Targets: []api.TargetStatus{
 						{
-							Namespace:  "ns",
-							SecretName: "overrideasdf",
+							Namespace: "ns",
+							Secret: api.TargetSecretStatus{
+								Name: "overrideasdf",
+							},
 						},
 					},
 				},
@@ -768,16 +807,22 @@ func TestClassificationWithOverrides(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:  "ns",
-						SecretName: "overrideasdf",
+						Namespace: "ns",
+						Secret: api.TargetSecretStatus{
+							Name: "overrideasdf",
+						},
 					},
 					{
-						Namespace:  "ns",
-						SecretName: "override",
+						Namespace: "ns",
+						Secret: api.TargetSecretStatus{
+							Name: "override",
+						},
 					},
 					{
-						Namespace:  "ns",
-						SecretName: "specasdf",
+						Namespace: "ns",
+						Secret: api.TargetSecretStatus{
+							Name: "specasdf",
+						},
 					},
 				},
 			},
@@ -823,12 +868,16 @@ func TestClassificationWithOverrides(t *testing.T) {
 			Status: api.RemoteSecretStatus{
 				Targets: []api.TargetStatus{
 					{
-						Namespace:  "ns",
-						SecretName: "spec-asdf",
+						Namespace: "ns",
+						Secret: api.TargetSecretStatus{
+							Name: "spec-asdf",
+						},
 					},
 					{
-						Namespace:  "ns",
-						SecretName: "spec-asdfasdf",
+						Namespace: "ns",
+						Secret: api.TargetSecretStatus{
+							Name: "spec-asdfasdf",
+						},
 					},
 				},
 			},

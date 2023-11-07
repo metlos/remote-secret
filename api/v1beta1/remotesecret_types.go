@@ -99,6 +99,8 @@ type TargetStatus struct {
 	// ApiUrl is the URL of the remote Kubernetes cluster to which the target points to.
 	ApiUrl string `json:"apiUrl,omitempty"`
 	// SecretName is the name of the secret that is actually deployed to the target namespace
+	//
+	// Deprecated: please use the Secret.Name field instead
 	SecretName string `json:"secretName"`
 	// ServiceAccountNames is the names of the service accounts that have been deployed to the target namespace
 	// +optional
@@ -109,13 +111,14 @@ type TargetStatus struct {
 	// Error the optional error message if the deployment of either the secret or the service accounts failed.
 	// +optional
 	Error string `json:"error,omitempty"`
-	// SetLabels are the labels that are explicilty set on the secret because they are defined in the spec of this remote
-	// secret. Note that the secret can have additional labels set on it that are not affected by the remote secret.
-	SetLabels map[string]string `json:"setLabels,omitempty"`
-	// SetAnnotations are the annotations that are explicilty set on the secret because they are defined in the spec of
-	// this remote secret. Note that the secret can have additional annotations set on it that are not affected by
-	// the remote secret.
-	SetAnnotations map[string]string `json:"setAnnotations,omitempty"`
+	// Secret contains the status information about the linked secret in the target
+	Secret TargetSecretStatus `json:"secret"`
+}
+
+type TargetSecretStatus struct {
+	Name        string            `json:"name"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // TargetKey is not used in the RemoteSecret spec as such but it represents an identifier of a target. As such it can be used
@@ -135,7 +138,7 @@ func (ts TargetStatus) ToTargetKey() TargetKey {
 	return TargetKey{
 		ApiUrl:             ts.ApiUrl,
 		Namespace:          ts.Namespace,
-		SecretName:         ts.SecretName,
+		SecretName:         ts.Secret.Name,
 		SecretGenerateName: "",
 	}
 }
