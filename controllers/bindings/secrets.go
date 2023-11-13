@@ -18,67 +18,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/redhat-appstudio/remote-secret/api/v1beta1"
 	"github.com/redhat-appstudio/remote-secret/pkg/logs"
-	"github.com/redhat-appstudio/remote-secret/pkg/sync"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-)
-
-var (
-	// pre-allocated empty map so that we don't have to allocate new empty instances in the serviceAccountSecretDiffOpts
-	emptySecretData = map[string][]byte{}
-
-	// secretIgnoredFields is TypeMeta + all most of the fields from ObjectMeta.
-	// We only care for changes in name, generateName, namespace, finalizers, labels and annotations and therefore
-	// should react to changes only in those.
-	secretIgnoredFields = []string{
-		"TypeMeta",
-		"ObjectMeta.SelfLink",
-		"ObjectMeta.UID",
-		"ObjectMeta.ResourceVersion",
-		"ObjectMeta.Generation",
-		"ObjectMeta.CreationTimestamp",
-		"ObjectMeta.DeletionTimestamp",
-		"ObjectMeta.DeletionGracePeriodSeconds",
-		"ObjectMeta.OwnerReferences",
-		"ObjectMeta.ManagedFields",
-	}
-
-	secretDiffOpts = cmp.Options{
-		cmpopts.IgnoreFields(corev1.Secret{}, secretIgnoredFields...),
-	}
-
-	// the service account secrets are treated specially by Kubernetes that automatically adds "ca.crt", "namespace" and
-	// "token" entries into the secret's data.
-	serviceAccountSecretDiffOpts = cmp.Options{
-		cmpopts.IgnoreFields(corev1.Secret{}, secretIgnoredFields...),
-		cmp.FilterPath(func(p cmp.Path) bool {
-			return p.Last().String() == ".Data"
-		}, cmp.Comparer(func(a map[string][]byte, b map[string][]byte) bool {
-			// cmp.Equal short-circuits if it sees nil maps - but we don't want that...
-			if a == nil {
-				a = emptySecretData
-			}
-			if b == nil {
-				b = emptySecretData
-			}
-
-			return cmp.Equal(a, b, cmpopts.IgnoreMapEntries(func(key string, _ []byte) bool {
-				switch key {
-				case "ca.crt", "namespace", "token":
-					return true
-				default:
-					return false
-				}
-			}))
-		}),
-		),
-	}
 )
 
 type secretHandler[K any] struct {
@@ -123,20 +69,33 @@ func (h *secretHandler[K]) Sync(ctx context.Context, key K, recreate bool) (*cor
 		secretName = spec.Name
 	}
 
-	diffOpts := secretDiffOpts
-
-	if spec.Type == corev1.SecretTypeServiceAccountToken {
-		diffOpts = serviceAccountSecretDiffOpts
+	secretGenerateName := spec.GenerateName
+	if secretGenerateName == "" {
+		secretGenerateName = h.Target.GetTargetObjectKey().Name + "-secret-"
 	}
 
+	var secret *corev1.Secret
+
+	if secretName == "" {
+		// create the secret
+		if secret, err = h.createTargetSecret(ctx, key, secretName, secretGenerateName, spec, data); err != nil {
+			return nil, string(ErrorReasonSecretUpdate), fmt.Errorf("failed to create the target secret of the deployment target %s (%s): %w", h.Target.GetTargetObjectKey(), h.Target.GetType(), err)
+		}
+	} else {
+		// update the secret
+		if secret, err = h.updateTargetSecret(ctx, key, secretName, secretGenerateName, spec, data); err != nil {
+			return nil, string(ErrorReasonSecretUpdate), fmt.Errorf("failed to update the target secret of the deployment target %s (%s): %w", h.Target.GetTargetObjectKey(), h.Target.GetType(), err)
+		}
+	}
+
+	return secret, "", nil
+}
+
+func (h *secretHandler[K]) createTargetSecret(ctx context.Context, key K, secretName string, secretGenerateName string, spec v1beta1.LinkableSecretSpec, data map[string][]byte) (*corev1.Secret, error) {
 	secret := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:         secretName,
-			GenerateName: spec.GenerateName,
+			GenerateName: secretGenerateName,
 			Namespace:    h.Target.GetTargetNamespace(),
 			Labels:       spec.Labels,
 			Annotations:  spec.Annotations,
@@ -145,25 +104,69 @@ func (h *secretHandler[K]) Sync(ctx context.Context, key K, recreate bool) (*cor
 		Type: spec.Type,
 	}
 
-	if secret.GenerateName == "" {
-		secret.GenerateName = h.Target.GetTargetObjectKey().Name + "-secret-"
-	}
+	var err error
 
 	_, err = h.ObjectMarker.MarkManaged(ctx, h.Target.GetTargetObjectKey(), secret)
 	if err != nil {
-		return nil, string(ErrorReasonSecretUpdate), fmt.Errorf("failed to mark the secret as managed in the deployment target (%s): %w", h.Target.GetType(), err)
+		return nil, err //nolint: wrapcheck // this is wrapped at the callsites
 	}
+	if err = h.Target.GetClient().Create(ctx, secret); err != nil {
+		if errors.IsAlreadyExists(err) {
+			return h.updateTargetSecret(ctx, key, secretName, secretGenerateName, spec, data)
+		}
+		return nil, err //nolint: wrapcheck // this is wrapped at the callsites
+	}
+	return secret, nil
+}
 
-	syncer := sync.New(h.Target.GetClient())
-
-	lg := log.FromContext(ctx).V(logs.DebugLevel)
-	lg.Info("syncing binding secret", "secret", secret, "secretMetadata", &secret.ObjectMeta)
-
-	_, obj, err := syncer.Sync(ctx, nil, secret, diffOpts)
+func (h *secretHandler[K]) updateTargetSecret(ctx context.Context, key K, secretName string, secretGenerateName string, spec v1beta1.LinkableSecretSpec, data map[string][]byte) (*corev1.Secret, error) {
+	secret := &corev1.Secret{}
+	if err := h.Target.GetClient().Get(ctx, client.ObjectKey{Name: secretName, Namespace: h.Target.GetTargetNamespace()}, secret); err != nil {
+		if errors.IsNotFound(err) {
+			if secret, err = h.createTargetSecret(ctx, key, secretName, secretGenerateName, spec, data); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+	_, err := h.ObjectMarker.MarkManaged(ctx, h.Target.GetTargetObjectKey(), secret)
 	if err != nil {
-		return nil, string(ErrorReasonSecretUpdate), fmt.Errorf("failed to sync the secret with the token data: %w", err)
+		return nil, err //nolint: wrapcheck // this is wrapped at the callsites
 	}
-	return obj.(*corev1.Secret), "", nil
+
+	// set the labels, annos and data fields that we require. Leave everything else in place.
+	if secret.Labels == nil {
+		secret.Labels = map[string]string{}
+	}
+	if secret.Annotations == nil {
+		secret.Annotations = map[string]string{}
+	}
+	if secret.Data == nil {
+		secret.Data = map[string][]byte{}
+	}
+
+	for k, v := range spec.Labels {
+		secret.Labels[k] = v
+	}
+	for k, v := range spec.Annotations {
+		secret.Annotations[k] = v
+	}
+	for k, v := range data {
+		secret.Data[k] = v
+	}
+
+	// and update
+	if err = h.Target.GetClient().Update(ctx, secret); err != nil {
+		if errors.IsNotFound(err) {
+			if secret, err = h.createTargetSecret(ctx, key, secretName, secretGenerateName, spec, data); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+	return secret, nil
 }
 
 func (h *secretHandler[K]) List(ctx context.Context) ([]*corev1.Secret, error) {

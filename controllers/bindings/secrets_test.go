@@ -148,7 +148,8 @@ func TestSync(t *testing.T) {
 			assert.NotNil(t, secret)
 			assert.Contains(t, secret.Data, "extra")
 			assert.Equal(t, secret.Data["extra"], []byte("token"))
-			assert.NotContains(t, secret.Data, "a")
+			assert.Contains(t, secret.Data, "a")
+			assert.Equal(t, secret.Data["a"], []byte("b"))
 		})
 
 		t.Run("other secret types", func(t *testing.T) {
@@ -190,7 +191,8 @@ func TestSync(t *testing.T) {
 			assert.NotNil(t, secret)
 			assert.Contains(t, secret.Data, "token")
 			assert.Equal(t, secret.Data["token"], []byte("token"))
-			assert.NotContains(t, secret.Data, "a")
+			assert.Contains(t, secret.Data, "a")
+			assert.Equal(t, secret.Data["a"], []byte("b"))
 		})
 		t.Run("honors recreate flag", func(t *testing.T) {
 			cl := clBld().
