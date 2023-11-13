@@ -15,7 +15,6 @@ package sync
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -179,17 +178,21 @@ func (s *Syncer) update(ctx context.Context, owner client.Object, actual client.
 
 		// now go through the labels and annos and remove all that are managed and not in the blueprint
 		for k := range targetLabels {
-			if slices.Contains(laOpts.ManagedLabelKeys, k) {
-				if _, ok := blueprint.GetLabels()[k]; !ok {
-					delete(targetLabels, k)
+			for _, mlk := range laOpts.ManagedLabelKeys {
+				if mlk == k {
+					if _, ok := blueprint.GetLabels()[k]; !ok {
+						delete(targetLabels, k)
+					}
 				}
 			}
 		}
 
 		for k := range targetAnnos {
-			if slices.Contains(laOpts.ManagedAnnotationKeys, k) {
-				if _, ok := blueprint.GetAnnotations()[k]; !ok {
-					delete(targetAnnos, k)
+			for _, mak := range laOpts.ManagedAnnotationKeys {
+				if mak == k {
+					if _, ok := blueprint.GetAnnotations()[k]; !ok {
+						delete(targetAnnos, k)
+					}
 				}
 			}
 		}
