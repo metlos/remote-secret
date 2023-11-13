@@ -63,6 +63,12 @@ func TestNamespaceTarget_GetSpec(t *testing.T) {
 		assert.Equal(t, api.LinkableSecretSpec{
 			Name:         "target-secret",
 			GenerateName: "kachny-",
+			Labels: map[string]string{
+				"k": "v",
+			},
+			Annotations: map[string]string{
+				"k": "v",
+			},
 		}, nt.GetSpec())
 	})
 }
@@ -135,6 +141,12 @@ func getTestRemoteSecretWithOverrides() *api.RemoteSecret {
 					Namespace: "target-ns",
 					Secret: &api.SecretOverride{
 						Name: "target-secret",
+						Labels: &map[string]string{
+							"k": "v",
+						},
+						Annotations: &map[string]string{
+							"k": "v",
+						},
 					},
 				},
 			},
